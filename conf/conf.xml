@@ -1,15 +1,15 @@
 <watchdir>
-<!-- On peut scanner autant de dossier que voulu, il suffie de copier la totalité des balises Folder -->
+<!-- On peut scanner autant de dossier que voulu, il suffie de copier la totalit� des balises Folder -->
     <folder>
     <!-- scan = chemin -->
         <scan>c:/temp/</scan>
-    <!-- ignoreInitial = ignore les fichier présent initialement dans le dossier -->
+    <!-- ignoreInitial = ignore les fichier pr�sent initialement dans le dossier -->
         <ignoreInitial>true</ignoreInitial>
-    <!-- awaitWriteFinish = attend la fin de modification ou lance les evenement dès l'apparition du fichier -->
+    <!-- awaitWriteFinish = attend la fin de modification ou lance les evenement d�s l'apparition du fichier -->
         <awaitWriteFinish>true</awaitWriteFinish>
-    <!-- stabilityThreshold = attend que le fichier ne soit pas modifié depuis 300ms pour considéré que la modification est fini -->
+    <!-- stabilityThreshold = attend que le fichier ne soit pas modifi� depuis 300ms pour consid�r� que la modification est fini -->
         <stabilityThreshold>300</stabilityThreshold>
-    <!-- pollInterval = verifi la modification de taille de fichier toutes les 100ms (A augmenter si l'on surverille un dossier réseau) -->
+    <!-- pollInterval = verifi la modification de taille de fichier toutes les 100ms (A augmenter si l'on surverille un dossier r�seau) -->
         <pollInterval>100</pollInterval>
         <actions>
             <move enrase='true' datejour='false'>\\PO5483\test$\</move>
@@ -17,27 +17,27 @@
         <!-- exemple, pour c:\script.ps1 cela executera c:\script.ps1 d:\chemincomplet\dufichier.txt -->
         </actions>
     </folder>
-<!-- On peut scanner autant de dossier que voulu, il suffie de copier la totalité des balises Folder -->
+<!-- On peut scanner autant de dossier que voulu, il suffie de copier la totalit� des balises Folder -->
     <folder>
     <!-- scan = chemin -->
         <scan>D:/ProjetsNJS/test/2</scan>
-    <!-- ignoreInitial = ignore les fichier présent initialement dans le dossier -->
+    <!-- ignoreInitial = ignore les fichier pr�sent initialement dans le dossier -->
         <ignoreInitial>true</ignoreInitial>
-    <!-- awaitWriteFinish = attend la fin de modification ou lance les evenement dès l'apparition du fichier -->
+    <!-- awaitWriteFinish = attend la fin de modification ou lance les evenement d�s l'apparition du fichier -->
         <awaitWriteFinish>true</awaitWriteFinish>
-    <!-- stabilityThreshold = attend que le fichier ne soit pas modifié depuis 300ms pour considéré que la modification est fini -->
+    <!-- stabilityThreshold = attend que le fichier ne soit pas modifi� depuis 300ms pour consid�r� que la modification est fini -->
         <stabilityThreshold>300</stabilityThreshold>
-    <!-- pollInterval = verifi la modification de taille de fichier toutes les 100ms (A augmenter si l'on surverille un dossier réseau) -->
+    <!-- pollInterval = verifi la modification de taille de fichier toutes les 100ms (A augmenter si l'on surverille un dossier r�seau) -->
         <pollInterval>100</pollInterval>
         <actions>
-        <!-- enrase = ecrase le fichier si deja présent -->
-        <!-- datejour = créé un dossier à la date du jour (YYYYMMJJ) dans le dossier de destination -->
-        <!-- plusieurs copy peuvent etre effectuées -->
+        <!-- enrase = ecrase le fichier si deja pr�sent -->
+        <!-- datejour = cr�� un dossier � la date du jour (YYYYMMJJ) dans le dossier de destination -->
+        <!-- plusieurs copy peuvent etre effectu�es -->
             <copy enrase='true' datejour='true'>D:/ProjetsNJS/test/sav/</copy>
             <copy enrase='true' datejour='false'>D:/ProjetsNJS/test/3/</copy>
-        <!-- enrase = ecrase le fichier si deja présent -->
-        <!-- datejour = créé un dossier à la date du jour (YYYYMMJJ) dans le dossier de destination -->
-        <!-- Un seul move peut etre effectuées -->
+        <!-- enrase = ecrase le fichier si deja pr�sent -->
+        <!-- datejour = cr�� un dossier � la date du jour (YYYYMMJJ) dans le dossier de destination -->
+        <!-- Un seul move peut etre effectu�es -->
             <move enrase='true' datejour='false'>D:/ProjetsNJS/test/4/</move>
         <!-- Execute un script powershell et passe le chemin de fichier en parametre -->
         <!-- exemple, pour c:\script.ps1 cela executera c:\script.ps1 d:\chemincomplet\dufichier.txt -->
