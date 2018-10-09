@@ -1,3 +1,10 @@
+PRODUCT Change:
+Vers 0.2.00 - Ajoute le Hash des fichiers (pour vérifier leur intégrité):
+		- Les hash sont ajouté sous forme d'info dans les logs
+	 	- En cas d'erreur le processus est interrompu.
+
+
+______________________________________________________________________
 INTRODUCTION
 	Il s’agit d’une application Watch Directory.
 Qui surveille un ou plusieurs dossiers, puis peut :
