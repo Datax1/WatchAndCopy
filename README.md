@@ -1,21 +1,28 @@
-PRODUCT Change: 
-Vers 0.2.00 - Ajoute le Hash des fichiers (pour vérifier leur intégrité):
-		- Les hash sont ajouté sous forme d'info dans les logs
-	 	- En cas d'erreur le processus est interrompu.
+### PRODUCT Change
+>Vers 0.2.1:
+ - Passage du hash du md5 au sha256 (Ajout prévisionnel de pouvoir laisser le choix du hash dans le fichier de conf)
+ - Correction du readme
+
+>Vers 0.2.0:
+ - Ajoute le Hash des fichiers (pour vérifier leur intégrité):\
+ - Les hash sont ajouté sous forme d'info dans les logs\
+ - En cas d'erreur le processus est interrompu.
 
 
 ______________________________________________________________________
-INTRODUCTION
-	Il s’agit d’une application Watch Directory.
-Qui surveille un ou plusieurs dossiers, puis peut :
-     - Copier les fichiers.
-    -  Déplacer les fichiers
-    -  Exécuter script un PowerShell (ou une commande powershell)
+# INTRODUCTION
+>Il s’agit d’une application Watch Directory.
 
-PREREQUIS	
+Qui surveille un ou plusieurs dossiers, puis peut :
+- Copier les fichiers.
+-  Déplacer les fichiers
+-  Exécuter script un PowerShell (ou une commande powershell)
+
+
+## PREREQUIS	
 -	Windows (La doc et le package d’installation sont prévu pour Windows)
 
-PROCEDURE D’INSTALLATION
+## PROCEDURE D’INSTALLATION
 - Décompresser le zip (WatchAndCopy.zip) dans le dossier d’installation (exemple : D:\Locarchives\WatchAndCopy )
 - Editer le fichier « install.cmd »
 Et modifier la ligne « set Install_dir=D:\Locarchives » pour y mettre le dossier d’installation
@@ -24,12 +31,12 @@ Et modifier la ligne « set Install_dir=D:\Locarchives » pour y mettre le dossi
 - Exécuter une 2eme fois l’install.cmd en tant qu’administrateur.
  
 
-L’INSTALLATION A AJOUTE UN SERVICE
+## L’INSTALLATION A AJOUTE UN SERVICE
  - Il faut démarrer le service.
 
-CONFIGURATION
+### CONFIGURATION
 Le fichier de configuration se trouve dans <install_dir>\conf\conf.xml : 
-________________________
+```
 <watchdir>
 <!-- On peut scanner autant de dossier que voulu, il suffie de copier la totalité des balises Folder -->
     <folder>
@@ -59,13 +66,13 @@ ________________________
         </actions>
     </folder>
 </watchdir>
-________________________
+```
 
 Il est possible de mettre autant de balise « copy » que l’on désire (le fichier sera alors copié à plusieurs endroits).
 Une seule balise « move » et «ps1 » est autorisé.
 
 L’on peut surveiller plusieurs dossiers en copiant tous le bloc folder, exemple : 
-________________________
+```
 <watchdir>
 <!-- On peut scanner autant de dossier que voulu, il suffie de copier la totalité des balises Folder -->
     <folder>
@@ -121,10 +128,10 @@ ________________________
         </actions>
     </folder>
 </watchdir>
-________________________
+```
 
 Il faut redémarrer le service Windows après avoir modifié le xml.
 
-EMPLACEMENT DES LOGS
+### EMPLACEMENT DES LOGS
 Les logs sont placé dans <Install_dir>\log
 Le système crée un fichier de log par jour, et y log (La détection de fichier, les actions et les erreurs)

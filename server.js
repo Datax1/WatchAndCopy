@@ -1,7 +1,7 @@
 var fs = require('fs-extra');
 var timestamp = require('time-stamp');
 const shell = require('node-powershell');
-const md5File = require('md5-file')
+const crosshash = require('file-allhashnode')
 //Chemin d'installation
 var ScriptPath = process.argv[1].substring(0,(process.argv[1].length - 9));
 
@@ -61,7 +61,7 @@ fs.readFile(ScriptPath + '/conf/conf.xml','UTF8' , function(err, data) {
     else
         myevent.emit('LectureConfXMLOK',data);
 });
-log.info('Lecture con xml ok');
+log.info('Lecture conf xml ok');
 
 //Quand le fichier xml est valide
 myevent.on('LectureConfXMLOK', function (data) {
@@ -143,7 +143,8 @@ myevent.on('watchadd', function (path,actions) {
         return log.error('nom de fichier introuvable: ', path)
     }
 
-    md5File(path, (err, hash) => {
+    
+    crosshash(path, function (err, hash) {
         if (err){
             log.error(err);
             return
@@ -180,7 +181,7 @@ myevent.on('copy',function (path,actions,filename,hash) {
 
                 log.info('Copie de ', path,' vers ',element._text+date+filename,' ok');
 
-                md5File(element._text+date+filename, (err, hash1) => {
+                crosshash(element._text+date+filename, function (err, hash1) {
                     if (err){
                         log.error(err);
                         return
@@ -234,8 +235,8 @@ myevent.on('move',function (path,actions,filename,hash) {
                         return
                     }
                     log.info('Copie de ', path,' vers ',element._text+date+filename,' ok');
-                    
-                    md5File(element._text+date+filename, (err, hash1) => {
+
+                    crosshash(element._text+date+filename, function (err, hash1) {
                         if (err){
                             log.error(err);
                             return
