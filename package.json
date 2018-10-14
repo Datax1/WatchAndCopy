@@ -6,7 +6,6 @@
   "dependencies": {
     "chokidar": "~2.0",
     "fs-extra": "~7.0",
-    "md5-file": "~4.0",
     "node-powershell": "~3.3",
     "simple-node-logger": "~0.93",
     "time-stamp": "~2.1",

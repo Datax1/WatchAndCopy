@@ -1,7 +1,7 @@
 var fs = require('fs-extra');
 var timestamp = require('time-stamp');
 const shell = require('node-powershell');
-const md5File = require('md5-file')
+
 //Chemin d'installation
 var ScriptPath = process.argv[1].substring(0,(process.argv[1].length - 9));
 
@@ -122,8 +122,8 @@ myevent.on('folderscan', function (folder) {
     });
     watcher
     .on('add', path => myevent.emit('watchadd',`${path}`, folder.actions[0]))
-    //.on('change', path => myevent.emit('watchmod',`${path}`))
-    //.on('unlink', path => myevent.emit('watchrem',`${path}`));
+    .on('change', path => myevent.emit('watchmod',`${path}`))
+    .on('unlink', path => myevent.emit('watchrem',`${path}`));
 });
 
 //Quand un nouveau fichier est detecté
@@ -143,27 +143,16 @@ myevent.on('watchadd', function (path,actions) {
         return log.error('nom de fichier introuvable: ', path)
     }
 
-    md5File(path, (err, hash) => {
-        if (err){
-            log.error(err);
-            return
-        }
-
-        log.info('hash: ', hash);
-       
-        if(actions.copy)
-            myevent.emit('copy',path,actions,filename,hash);
-        else if(actions.ps1)
-            myevent.emit('ps1',path,actions,filename,hash);
-        else if(actions.move)
-            myevent.emit('move',path,actions,filename,hash);
-    });
-
-
+    if(actions.copy)
+        myevent.emit('copy',path,actions,filename);
+    else if(actions.ps1)
+        myevent.emit('ps1',path,actions,filename);
+    else if(actions.move)
+        myevent.emit('move',path,actions,filename);
 })
 
 //Si une copie est à effectuer.
-myevent.on('copy',function (path,actions,filename,hash) {
+myevent.on('copy',function (path,actions,filename) {
     actions.copy.forEach(element => {
         if(element._attr.datejour._value==true)
             var date=timestamp('YYYYMMDD')+'/';
@@ -174,29 +163,13 @@ myevent.on('copy',function (path,actions,filename,hash) {
 
             fs.copy(path, element._text+date+filename, err => {
                 if (err){
-                    log.error(err);
+                    log.error(err)
+                    
                     return
                 }
-
                 log.info('Copie de ', path,' vers ',element._text+date+filename,' ok');
-
-                md5File(element._text+date+filename, (err, hash1) => {
-                    if (err){
-                        log.error(err);
-                        return
-                    }
-
-                    if(hash == hash1){
-                        log.info('Hash de ',element._text+date+filename,': ',hash1,' ok');
-                        myevent.emit('cp'+filename,'ok');
-                    }
-                    else{
-                        log.error('Hash de ',element._text+date+filename,': ',hash1,' Nok');
-                        return
-                    }
-                });
-
-            });
+                myevent.emit('cp'+filename,'ok');
+            })
         }
         else{
             log.error('Copie de ', path,' vers ',element._text+date+filename,' impossible // Fichier Existant');
@@ -208,16 +181,16 @@ myevent.on('copy',function (path,actions,filename,hash) {
         count++;
         if(count == actions.copy.length){
             if(actions.ps1)
-                myevent.emit('ps1',path,actions,filename,hash);
+                myevent.emit('ps1',path,actions,filename);
             else if(actions.move)
-                myevent.emit('move',path,actions,filename,hash);
+                myevent.emit('move',path,actions,filename);
         }
     });
 })
 
 
 //Si un move est à effectuer.
-myevent.on('move',function (path,actions,filename,hash) {
+myevent.on('move',function (path,actions,filename) {
     if(actions.move){
         actions.move.forEach(element => {
             if(element._attr.datejour._value==true)
@@ -234,31 +207,11 @@ myevent.on('move',function (path,actions,filename,hash) {
                         return
                     }
                     log.info('Copie de ', path,' vers ',element._text+date+filename,' ok');
-                    
-                    md5File(element._text+date+filename, (err, hash1) => {
-                        if (err){
-                            log.error(err);
-                            return
-                        }
-
-                        if(hash == hash1){
-                            log.info('Hash de ',element._text+date+filename,': ',hash1,' ok');
-                            fs.remove(path, err => {
-                                if (err) return log.error(err)
-                                log.info('Supression de ',path);
-                            })
-                        }
-                        else{
-                            log.error('Hash de ',element._text+date+filename,': ',hash1,' Nok');
-
-                            return
-                        }
-                        
-                    });
-
-
-
-
+    
+                    fs.remove(path, err => {
+                        if (err) return log.error(err)
+                        log.info('Supression de ',path);
+                    })
                 })
             }
             else{
@@ -270,7 +223,7 @@ myevent.on('move',function (path,actions,filename,hash) {
 })
 
 //Si un ps1 est à executer.
-myevent.on('ps1',function (path,actions,filename,hash) {
+myevent.on('ps1',function (path,actions,filename) {
     log.info('Node power-shell Chargé');
     actions.ps1.forEach(element => {
         let ps = new shell({
@@ -297,7 +250,7 @@ myevent.on('ps1',function (path,actions,filename,hash) {
         count++;
         if(count == actions.ps1.length){
             if(actions.move)
-                myevent.emit('move',path,actions,filename,hash);
+                myevent.emit('move',path,actions,filename);
         }
     });
 })
