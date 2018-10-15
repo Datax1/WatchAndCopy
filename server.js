@@ -1,7 +1,7 @@
 var fs = require('fs-extra');
 var timestamp = require('time-stamp');
 const shell = require('node-powershell');
-const crosshash = require('file-allhashnode')
+const fileallhash = require('file-allhash')
 //Chemin d'installation
 var ScriptPath = process.argv[1].substring(0,(process.argv[1].length - 9));
 
@@ -16,9 +16,9 @@ const opts = {
         dateFormat:'YYYY.MM.DD'
 };
 const log = require('simple-node-logger').createRollingFileLogger( opts );
-log.setLevel(conf.errorlevel);
+log.setLevel(conf.conf['errorlevel']);
 log.info('Fonction Log Chargé');
-log.info('Niveau de log: '+conf.errorlevel);
+log.info('Niveau de log: '+conf.conf['errorlevel']);
 //log.debug('preparing email');
 //log.info('sending email');
 //log.error('failed to send email');
@@ -33,22 +33,7 @@ const { DOMParser } = require('xmldom');
 const xmlToJSON = require('xmlToJSON');
 xmlToJSON.stringToXML = (string) => new DOMParser().parseFromString(string, 'text/xml');
 
-var optionsxml = { 
-    mergeCDATA: true,	// extract cdata and merge with text nodes
-    grokAttr: true,		// convert truthy attributes to boolean, etc
-    grokText: true,		// convert truthy text/attr to boolean, etc
-    normalize: true,	// collapse multiple spaces to single space
-    xmlns: true, 		// include namespaces as attributes in output
-    namespaceKey: '_ns', 	// tag name for namespace objects
-    textKey: '_text', 	// tag name for text nodes
-    valueKey: '_value', 	// tag name for attribute values
-    attrKey: '_attr', 	// tag for attr groups
-    cdataKey: '_cdata',	// tag for cdata nodes (ignored if mergeCDATA is true)
-    attrsAsObject: true, 	// if false, key is used as prefix to name, set prefix to '' to merge children and attrs.
-    stripAttrPrefix: true, 	// remove namespace prefixes from attributes
-    stripElemPrefix: true, 	// for elements of same name in diff namespaces, you can enable namespaces and access the nskey property
-    childrenAsArray: true 	// force children into arrays
-};	
+var optionsxml = conf.optionsxml;
 log.info('Fonction xml parser Chargé');
 
 
@@ -78,34 +63,39 @@ var chokidar = require('chokidar');
 myevent.on('folderscan', function (folder) {
     log.debug('ON folderscan: ',folder);
 
+    if(folder._attr && folder._attr.hash)
+        var hasher = folder._attr.hash._value;
+    else
+    var hasher = conf.hash['hash'];
+
     if(folder.ignoreInitial){
         if(folder.ignoreInitial[0]._text == 'false')
             defignoreInitial = false;
         else
-            defignoreInitial = true;
+            defignoreInitial = conf.watcher['defignoreInitial'];
     }
     else
-        defignoreInitial = true;
+        defignoreInitial = conf.watcher['defignoreInitial'];
 
     if(folder.awaitWriteFinish){
         if(folder.awaitWriteFinish[0]._text == 'false')
             defawaitWriteFinish = false;
         else
-            defawaitWriteFinish = true;
+            defawaitWriteFinish = conf.watcher['defawaitWriteFinish'];
 
     }
     else
-        defawaitWriteFinish = true;
+        defawaitWriteFinish = conf.watcher['defawaitWriteFinish'];
 
     if(folder.stabilityThreshold)
         defstabilityThreshold = folder.stabilityThreshold[0]._text;
     else
-        defstabilityThreshold = 300;
+        defstabilityThreshold = conf.watcher['defstabilityThreshold'];
 
     if(folder.pollInterval)
         defpollInterval = folder.pollInterval[0]._text;
     else
-        defpollInterval = 100;
+        defpollInterval = conf.watcher['defpollInterval'];
 
     log.debug('Chargement du watcher');
     log.info('Chargement du watcher: ', folder.scan[0]._text);
@@ -121,13 +111,13 @@ myevent.on('folderscan', function (folder) {
         depth: 0
     });
     watcher
-    .on('add', path => myevent.emit('watchadd',`${path}`, folder.actions[0]))
+    .on('add', path => myevent.emit('watchadd',`${path}`, folder.actions[0], hasher))
     //.on('change', path => myevent.emit('watchmod',`${path}`))
     //.on('unlink', path => myevent.emit('watchrem',`${path}`));
 });
 
 //Quand un nouveau fichier est detecté
-myevent.on('watchadd', function (path,actions) {
+myevent.on('watchadd', function (path,actions, hasher) {
     log.info('Nouveau fichier: ', path);
     log.debug('actions', actions);
 
@@ -144,7 +134,7 @@ myevent.on('watchadd', function (path,actions) {
     }
 
     
-    crosshash(path, function (err, hash) {
+    fileallhash(path, hasher, function (err, hash) {
         if (err){
             log.error(err);
             return
@@ -153,11 +143,11 @@ myevent.on('watchadd', function (path,actions) {
         log.info('hash: ', hash);
        
         if(actions.copy)
-            myevent.emit('copy',path,actions,filename,hash);
+            myevent.emit('copy',path,actions,filename,hasher,hash);
         else if(actions.ps1)
-            myevent.emit('ps1',path,actions,filename,hash);
+            myevent.emit('ps1',path,actions,filename,hasher,hash);
         else if(actions.move)
-            myevent.emit('move',path,actions,filename,hash);
+            myevent.emit('move',path,actions,filename,hasher,hash);
     });
 
 
@@ -181,7 +171,7 @@ myevent.on('copy',function (path,actions,filename,hash) {
 
                 log.info('Copie de ', path,' vers ',element._text+date+filename,' ok');
 
-                crosshash(element._text+date+filename, function (err, hash1) {
+                fileallhash(element._text+date+filename, hasher, function (err, hash1) {
                     if (err){
                         log.error(err);
                         return
@@ -209,16 +199,16 @@ myevent.on('copy',function (path,actions,filename,hash) {
         count++;
         if(count == actions.copy.length){
             if(actions.ps1)
-                myevent.emit('ps1',path,actions,filename,hash);
+                myevent.emit('ps1',path,actions,filename,hasher,hash);
             else if(actions.move)
-                myevent.emit('move',path,actions,filename,hash);
+                myevent.emit('move',path,actions,filename,hasher,hash);
         }
     });
 })
 
 
 //Si un move est à effectuer.
-myevent.on('move',function (path,actions,filename,hash) {
+myevent.on('move',function (path,actions,filename,hasher,hash) {
     if(actions.move){
         actions.move.forEach(element => {
             if(element._attr.datejour._value==true)
@@ -236,7 +226,7 @@ myevent.on('move',function (path,actions,filename,hash) {
                     }
                     log.info('Copie de ', path,' vers ',element._text+date+filename,' ok');
 
-                    crosshash(element._text+date+filename, function (err, hash1) {
+                    fileallhash(element._text+date+filename,hasher, function (err, hash1) {
                         if (err){
                             log.error(err);
                             return
@@ -271,7 +261,7 @@ myevent.on('move',function (path,actions,filename,hash) {
 })
 
 //Si un ps1 est à executer.
-myevent.on('ps1',function (path,actions,filename,hash) {
+myevent.on('ps1',function (path,actions,filename,hasher,hash) {
     log.info('Node power-shell Chargé');
     actions.ps1.forEach(element => {
         let ps = new shell({
@@ -298,7 +288,7 @@ myevent.on('ps1',function (path,actions,filename,hash) {
         count++;
         if(count == actions.ps1.length){
             if(actions.move)
-                myevent.emit('move',path,actions,filename,hash);
+                myevent.emit('move',path,actions,filename,hasher,hash);
         }
     });
 })
