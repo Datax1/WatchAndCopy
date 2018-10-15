@@ -69,7 +69,7 @@ myevent.on('folderscan', function (folder) {
     var hasher = conf.hash['hash'];
 
     if(folder.ignoreInitial){
-        if(folder.ignoreInitial[0]._text == 'false')
+        if(folder.ignoreInitial[0]._text == false)
             defignoreInitial = false;
         else
             defignoreInitial = conf.watcher['defignoreInitial'];
@@ -78,7 +78,7 @@ myevent.on('folderscan', function (folder) {
         defignoreInitial = conf.watcher['defignoreInitial'];
 
     if(folder.awaitWriteFinish){
-        if(folder.awaitWriteFinish[0]._text == 'false')
+        if(folder.awaitWriteFinish[0]._text == false)
             defawaitWriteFinish = false;
         else
             defawaitWriteFinish = conf.watcher['defawaitWriteFinish'];
@@ -171,21 +171,27 @@ myevent.on('copy',function (path,actions,filename,hash) {
 
                 log.info('Copie de ', path,' vers ',element._text+date+filename,' ok');
 
-                fileallhash(element._text+date+filename, hasher, function (err, hash1) {
-                    if (err){
-                        log.error(err);
-                        return
-                    }
-
-                    if(hash == hash1){
-                        log.info('Hash de ',element._text+date+filename,': ',hash1,' ok');
+                if(element._attr && element._attr.hash && element._attr.hash._value == false){
+                    log.info(element._text+date+filename,' ok. Pas de Hash');
                         myevent.emit('cp'+filename,'ok');
-                    }
-                    else{
-                        log.error('Hash de ',element._text+date+filename,': ',hash1,' Nok');
-                        return
-                    }
-                });
+                }
+                else{
+                    fileallhash(element._text+date+filename, hasher, function (err, hash1) {
+                        if (err){
+                            log.error(err);
+                            return
+                        }
+
+                        if(hash == hash1){
+                            log.info('Hash de ',element._text+date+filename,': ',hash1,' ok');
+                            myevent.emit('cp'+filename,'ok');
+                        }
+                        else{
+                            log.error('Hash de ',element._text+date+filename,': ',hash1,' Nok');
+                            return
+                        }
+                    });
+                }
 
             });
         }
@@ -226,31 +232,36 @@ myevent.on('move',function (path,actions,filename,hasher,hash) {
                     }
                     log.info('Copie de ', path,' vers ',element._text+date+filename,' ok');
 
-                    fileallhash(element._text+date+filename,hasher, function (err, hash1) {
-                        if (err){
-                            log.error(err);
-                            return
-                        }
+                    if(element._attr && element._attr.hash && element._attr.hash._value == false){
+                        log.info(element._text+date+filename,' ok. Pas de Hash');
+                        fs.remove(path, err => {
+                            if (err) return log.error(err)
+                            log.info('Supression de ',path);
+                        })
+                    }
+                    else{
+                        fileallhash(element._text+date+filename,hasher, function (err, hash1) {
+                            if (err){
+                                log.error(err);
+                                return
+                            }
 
-                        if(hash == hash1){
-                            log.info('Hash de ',element._text+date+filename,': ',hash1,' ok');
-                            fs.remove(path, err => {
-                                if (err) return log.error(err)
-                                log.info('Supression de ',path);
-                            })
-                        }
-                        else{
-                            log.error('Hash de ',element._text+date+filename,': ',hash1,' Nok');
+                            if(hash == hash1){
+                                log.info('Hash de ',element._text+date+filename,': ',hash1,' ok');
+                                fs.remove(path, err => {
+                                    if (err) return log.error(err)
+                                    log.info('Supression de ',path);
+                                })
+                            }
+                            else{
+                                log.error('Hash de ',element._text+date+filename,': ',hash1,' Nok');
 
-                            return
-                        }
-                        
-                    });
-
-
-
-
-                })
+                                return
+                            }
+                            
+                        });
+                    }
+                });
             }
             else{
                 log.error('Deplacement de ', path,' vers ',element._text+date+filename,' impossible // Fichier Existant');
@@ -271,13 +282,11 @@ myevent.on('ps1',function (path,actions,filename,hasher,hash) {
         ps.addCommand(element._text+' '+path )
         ps.invoke()
         .then(output => {
-          console.log(output);
           log.info(output);
           ps.dispose();
           myevent.emit('ps1'+filename,'ok');
         })
         .catch(err => {
-          console.log(err);
           log.error(err);
           ps.dispose();
         });
