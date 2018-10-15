@@ -1,6 +1,6 @@
 ### PRODUCT Change 
 >Vers 0.2.2:
- - Possibilité de changé le format du hash (sha256, sha512 etc...) => le parametrage se fait via le conf.xml
+ - Possibilité de changé le format du hash (sha256, sha512 etc...) => le parametrage se fait via le conf.xml .
  - Modification du conf.js
 
 
