@@ -22,15 +22,21 @@ Qui surveille un ou plusieurs dossiers, puis peut :
 ## PREREQUIS	
 -	Windows (La doc et le package d’installation sont prévu pour Windows)
 
-## PROCEDURE D’INSTALLATION
+## PROCEDURE D’INSTALLATION WINDOWS
+__Si Node n'est pas installé:__
 - Décompresser le zip (WatchAndCopy.zip) dans le dossier d’installation (exemple : D:\Locarchives\WatchAndCopy )
 - Editer le fichier « install.cmd »
 Et modifier la ligne « set Install_dir=D:\Locarchives » pour y mettre le dossier d’installation
 - Exécuter l’install.cmd en tant qu’administrateur.
 - Redémarrer la machine.
 - Exécuter une 2eme fois l’install.cmd en tant qu’administrateur.
- 
 
+__Si Node est installé:__
+``` 
+npm install
+npm install -g qckwinsvc
+qckwinsvc --name WatchAndCopy --description "WatcherYF" --script "%Install_dir%\server.js" --startImmediately y
+```
 ## L’INSTALLATION A AJOUTE UN SERVICE
  - Il faut démarrer le service.
 
