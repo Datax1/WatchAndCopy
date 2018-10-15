@@ -1,4 +1,4 @@
-### PRODUCT Change
+### PRODUCT Change 
 >Vers 0.2.1:
  - Passage du hash du md5 au sha256 (Ajout prévisionnel de pouvoir laisser le choix du hash dans le fichier de conf)
  - Correction du readme
