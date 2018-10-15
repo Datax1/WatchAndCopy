@@ -2,7 +2,7 @@
   "requires": true,
   "lockfileVersion": 1,
   "name": "watchandcopy",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Watch directory And copy/move or execute PowerShell",
   "main": "server.js",
   "dependencies": {
