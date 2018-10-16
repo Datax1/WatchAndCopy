@@ -1,4 +1,8 @@
 ### PRODUCT Change 
+>Vers 0.2.4:
+ - Modification de l'execution PowerShell + ajout logs
+ - Possibilite de desactiver le Hash.
+
 >Vers 0.2.2:
  - Possibilité de changé le format du hash (sha256, sha512 etc...) => le parametrage se fait via le conf.xml .
  - Modification du conf.js
@@ -49,31 +53,37 @@ qckwinsvc --name WatchAndCopy --description "WatcherYF" --script "%Install_dir%\
 Le fichier de configuration se trouve dans <install_dir>\conf\conf.xml : 
 ```
 <watchdir>
-<!-- On peut scanner autant de dossier que voulu, il suffie de copier la totalité des balises Folder -->
-    <folder>
+<!-- On peut scanner autant de dossier que voulu, il suffie de copier la totalite des balises Folder -->
+    <folder hash='sha256'>
     <!-- scan = chemin -->
         <scan>D:/ProjetsNJS/test/1</scan>
-    <!-- ignoreInitial = ignore les fichier présent initialement dans le dossier -->
+    <!-- ignoreInitial = ignore les fichier present initialement dans le dossier -->
         <ignoreInitial>true</ignoreInitial>
-    <!-- awaitWriteFinish = attend la fin de modification ou lance les evenement dès l'apparition du fichier -->
+    <!-- awaitWriteFinish = attend la fin de modification ou lance les evenement des l'apparition du fichier -->
         <awaitWriteFinish>true</awaitWriteFinish>
-    <!-- stabilityThreshold = attend que le fichier ne soit pas modifié depuis 300ms pour considéré que la modification est fini -->
+    <!-- stabilityThreshold = attend que le fichier ne soit pas modifie depuis 300ms pour considere que la modification est fini -->
         <stabilityThreshold>300</stabilityThreshold>
-    <!-- pollInterval = verifi la modification de taille de fichier toutes les 100ms (A augmenter si l'on surverille un dossier réseau) -->
+    <!-- pollInterval = verifi la modification de taille de fichier toutes les 100ms (A augmenter si l'on surverille un dossier reseau) -->
         <pollInterval>100</pollInterval>
+        <!-- Plusieurs actions sont possible: -->
+        <!-- - Copy => Autant que voulu -->
+        <!-- - Execution de powershell => un seul -->
+        <!-- - Move => un seul -->
+        <!-- Les actions s'executent dans l'ordre suivant: Copy => Powershell => Move -->
         <actions>
-        <!-- enrase = ecrase le fichier si deja présent -->
-        <!-- datejour = créé un dossier à la date du jour (YYYYMMJJ) dans le dossier de destination -->
-        <!-- plusieurs copy peuvent etre effectuées -->
-            <copy enrase='true' datejour='true'>D:/ProjetsNJS/test/sav/</copy>
-            <copy enrase='true' datejour='false'>D:/ProjetsNJS/test/3/</copy>
-        <!-- enrase = ecrase le fichier si deja présent -->
-        <!-- datejour = créé un dossier à la date du jour (YYYYMMJJ) dans le dossier de destination -->
-        <!-- Un seul move peut etre effectuées -->
-            <move enrase='true' datejour='false'>D:/ProjetsNJS/test/4/</move>
-        <!-- Execute un script powershell et passe le chemin de fichier en parametre -->
+        <!-- enrase = ecrase le fichier si deja present -->
+        <!-- datejour = cree un dossier e la date du jour (YYYYMMJJ) dans le dossier de destination -->
+        <!-- plusieurs copy peuvent etre effectuees -->
+            <copy enrase='true' datejour='true' hash='true'>D:/ProjetsNJS/test/sav/</copy>
+            <copy enrase='true' datejour='false' hash='true'>D:/ProjetsNJS/test/3/</copy>
+        <!-- enrase = ecrase le fichier si deja present -->
+        <!-- datejour = cree un dossier e la date du jour (YYYYMMJJ) dans le dossier de destination -->
+        <!-- Un seul move peut etre effectuees -->
+            <move enrase='true' datejour='false' hash='true'>D:/ProjetsNJS/test/4/</move>
+        <!-- Execute un script powershell et remplace _filename_ par le chemin du fichier  -->
+        <!-- Et _hash_ par le hash du fichier avant execution du powhershell ^^-->
         <!-- exemple, pour c:\script.ps1 cela executera c:\script.ps1 d:\chemincomplet\dufichier.txt -->
-            <ps1>echo test: </ps1>
+            <ps1>echo Fichier: _filename_ //// Hash: _hash_ >c:\test\test.txt</ps1>
         </actions>
     </folder>
 </watchdir>
