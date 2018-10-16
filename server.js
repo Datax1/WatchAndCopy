@@ -97,7 +97,8 @@ myevent.on('folderscan', function (folder) {
     else
         defpollInterval = conf.watcher['defpollInterval'];
 
-    log.debug('Chargement du watcher');
+    log.debug('Chargement du watcher avant instance.');
+//----------------A instancier en Children-----------------------------------------------
     log.info('Chargement du watcher: ', folder.scan[0]._text);
     var watcher = chokidar.watch([folder.scan[0]._text], {
         ignored: /(^|[\/\\])\../,
@@ -114,8 +115,11 @@ myevent.on('folderscan', function (folder) {
     .on('add', path => myevent.emit('watchadd',`${path}`, folder.actions[0], hasher))
     //.on('change', path => myevent.emit('watchmod',`${path}`))
     //.on('unlink', path => myevent.emit('watchrem',`${path}`));
+//----------------A instancier en Children END-----------------------------------------------
+
 });
 
+//----------------A instancier en Children-----------------------------------------------
 //Quand un nouveau fichier est detecté
 myevent.on('watchadd', function (path,actions, hasher) {
     log.info('Nouveau fichier: ', path);
@@ -210,7 +214,7 @@ myevent.on('copy',function (path,actions,filename,hash) {
                 myevent.emit('move',path,actions,filename,hasher,hash);
         }
     });
-})
+});
 
 
 //Si un move est à effectuer.
@@ -269,7 +273,7 @@ myevent.on('move',function (path,actions,filename,hasher,hash) {
         });
 
     }
-})
+});
 
 //Si un ps1 est à executer.
 myevent.on('ps1',function (path,actions,filename,hasher,hash) {
@@ -279,11 +283,18 @@ myevent.on('ps1',function (path,actions,filename,hasher,hash) {
             executionPolicy: 'Bypass',
             noProfile: true
           });
-        ps.addCommand(element._text+' '+path )
+
+        var regex = /_filename_/gi;
+        element._text = element._text.replace(regex, path);
+        var regex = /_hash_/gi;
+        element._text = element._text.replace(regex, hash);
+        log.info('Execution de la commande: '+element._text);
+        ps.addCommand(element._text);
         ps.invoke()
         .then(output => {
           log.info(output);
           ps.dispose();
+          log.info('Déchargement du module power-shell');
           myevent.emit('ps1'+filename,'ok');
         })
         .catch(err => {
@@ -300,4 +311,6 @@ myevent.on('ps1',function (path,actions,filename,hasher,hash) {
                 myevent.emit('move',path,actions,filename,hasher,hash);
         }
     });
-})
+});
+
+//----------------A instancier en Children END-----------------------------------------------
