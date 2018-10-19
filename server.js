@@ -100,21 +100,41 @@ myevent.on('folderscan', function (folder) {
     log.debug('Chargement du watcher avant instance.');
 //----------------A instancier en Children-----------------------------------------------
     log.info('Chargement du watcher: ', folder.scan[0]._text);
-    var watcher = chokidar.watch([folder.scan[0]._text], {
-        ignored: /(^|[\/\\])\../,
-        persistent: true,
-        ignoreInitial: defignoreInitial ,
-        awaitWriteFinish: defawaitWriteFinish,
-        awaitWriteFinish: {
-            stabilityThreshold: defstabilityThreshold, 
-            pollInterval: defpollInterval
-        },
-        depth: 0
+    var foldertst = '';
+    if(folder.scan[0]._text.lastIndexOf('\\') != -1 ){
+        foldertst = folder.scan[0]._text.substring(0,folder.scan[0]._text.lastIndexOf('\\')+1);
+        
+    }
+    else if(folder.scan[0]._text.lastIndexOf('/') != -1){
+        foldertst = folder.scan[0]._text.substring(0,folder.scan[0]._text.lastIndexOf('/')+1);
+    }
+    else{
+        return log.error('Dossier introubable: ', folder.scan[0]._text)
+    }
+    
+    fs.access(foldertst, fs.constants.F_OK, (err) => {
+        if(err){ 
+            log.error('Le dossier: ',foldertst,' inaccessible.');
+            log.info('watcher: ', foldertst,' non charge');
+            return
+        }
+        
+        var watcher = chokidar.watch([folder.scan[0]._text], {
+            ignored: /(^|[\/\\])\../,
+            persistent: true,
+            ignoreInitial: defignoreInitial ,
+            awaitWriteFinish: defawaitWriteFinish,
+            awaitWriteFinish: {
+                stabilityThreshold: defstabilityThreshold, 
+                pollInterval: defpollInterval
+            },
+            depth: 0
+        });
+        watcher
+        .on('add', path => myevent.emit('watchadd',`${path}`, folder.actions[0], hasher))
+        //.on('change', path => myevent.emit('watchmod',`${path}`))
+        //.on('unlink', path => myevent.emit('watchrem',`${path}`));
     });
-    watcher
-    .on('add', path => myevent.emit('watchadd',`${path}`, folder.actions[0], hasher))
-    //.on('change', path => myevent.emit('watchmod',`${path}`))
-    //.on('unlink', path => myevent.emit('watchrem',`${path}`));
 //----------------A instancier en Children END-----------------------------------------------
 
 });
@@ -127,10 +147,10 @@ myevent.on('watchadd', function (path,actions, hasher) {
 
     //On determine le nom du fichier
     var filename = '';
-    if(path.lastIndexOf('\\')){
+    if(path.lastIndexOf('\\') != -1){
         filename = path.substring(path.lastIndexOf('\\')+1);
     }
-    else if(path.lastIndexOf('/')){
+    else if(path.lastIndexOf('/') != -1){
         filename = path.substring(path.lastIndexOf('/')+1);
     }
     else{
@@ -155,7 +175,7 @@ myevent.on('watchadd', function (path,actions, hasher) {
     });
 
 
-})
+});
 
 //Si une copie est à effectuer.
 myevent.on('copy',function (path,actions,filename,hash) {
@@ -164,44 +184,52 @@ myevent.on('copy',function (path,actions,filename,hash) {
             var date=timestamp('YYYYMMDD')+'/';
         else
             var date='';
+        
+        fs.access(element._text, fs.constants.W_OK, (err) => {
+            if(err){ 
+                log.error('Le dossier: ',element._text,'  ne peut etre ecrit. // Copie impossible');
+                return
+            }
 
-        if( (!fs.existsSync(element._text+date+filename)) | element._attr.enrase._value==true ){
+            if( (!fs.existsSync(element._text+date+filename)) | element._attr.enrase._value==true ){
 
-            fs.copy(path, element._text+date+filename, err => {
-                if (err){
-                    log.error(err);
-                    return
-                }
-
-                log.info('Copie de ', path,' vers ',element._text+date+filename,' ok');
-
-                if(element._attr && element._attr.hash && element._attr.hash._value == false){
-                    log.info(element._text+date+filename,' ok. Pas de Hash');
-                        myevent.emit('cp'+filename,'ok');
-                }
-                else{
-                    fileallhash(element._text+date+filename, hasher, function (err, hash1) {
-                        if (err){
-                            log.error(err);
-                            return
-                        }
-
-                        if(hash == hash1){
-                            log.info('Hash de ',element._text+date+filename,': ',hash1,' ok');
+                fs.copy(path, element._text+date+filename, err => {
+                    if (err){
+                        log.error(err);
+                        return
+                    }
+    
+                    log.info('Copie de ', path,' vers ',element._text+date+filename,' ok');
+    
+                    if(element._attr && element._attr.hash && element._attr.hash._value == false){
+                        log.info(element._text+date+filename,' ok. Pas de Hash');
                             myevent.emit('cp'+filename,'ok');
-                        }
-                        else{
-                            log.error('Hash de ',element._text+date+filename,': ',hash1,' Nok');
-                            return
-                        }
-                    });
-                }
+                    }
+                    else{
+                        fileallhash(element._text+date+filename, hasher, function (err, hash1) {
+                            if (err){
+                                log.error(err);
+                                return
+                            }
+    
+                            if(hash == hash1){
+                                log.info('Hash de ',element._text+date+filename,': ',hash1,' ok');
+                                myevent.emit('cp'+filename,'ok');
+                            }
+                            else{
+                                log.error('Hash de ',element._text+date+filename,': ',hash1,' Nok');
+                                return
+                            }
+                        });
+                    }
+    
+                });
+            }
+            else{
+                log.error('Copie de ', path,' vers ',element._text+date+filename,' impossible // Fichier Existant');
+            }
+        });
 
-            });
-        }
-        else{
-            log.error('Copie de ', path,' vers ',element._text+date+filename,' impossible // Fichier Existant');
-        }
     });
 
     var count = 0;
@@ -225,71 +253,85 @@ myevent.on('move',function (path,actions,filename,hasher,hash) {
                 var date=timestamp('YYYYMMDD')+'/';
             else
                 var date='';
-    
-            if( (!fs.existsSync(element._text+date+filename)) | element._attr.enrase._value==true ){
-    
-                fs.copy(path, element._text+date+filename, err => {
-                    if (err){
-                        log.error(err)
-                        
+            
+            fs.access(element._text, fs.constants.W_OK, (err) => {
+                if(err){ 
+                    log.error('Le dossier: ',element._text,' ne peut etre ecrit. // Deplacement impossible');
+                    return
+                }
+                fs.access(path, fs.constants.W_OK, (err) => {
+                    if(err){ 
+                        log.error(path,' Ne peut etre supprimé. // Deplacement impossible');
                         return
                     }
-                    log.info('Copie de ', path,' vers ',element._text+date+filename,' ok');
-
-                    if(element._attr && element._attr.hash && element._attr.hash._value == false){
-                        log.info(element._text+date+filename,' ok. Pas de Hash');
-                        fs.remove(path, err => {
-                            if (err) return log.error(err)
-                            log.info('Supression de ',path);
-                        })
-                    }
-                    else{
-                        fileallhash(element._text+date+filename,hasher, function (err, hash1) {
+                    
+                    if( (!fs.existsSync(element._text+date+filename)) | element._attr.enrase._value==true ){
+    
+                        fs.copy(path, element._text+date+filename, err => {
                             if (err){
-                                log.error(err);
+                                log.error(err)
+                                
                                 return
                             }
-
-                            if(hash == hash1){
-                                log.info('Hash de ',element._text+date+filename,': ',hash1,' ok');
+                            log.info('Copie de ', path,' vers ',element._text+date+filename,' ok');
+        
+                            if(element._attr && element._attr.hash && element._attr.hash._value == false){
+                                log.info(element._text+date+filename,' ok. Pas de Hash');
                                 fs.remove(path, err => {
                                     if (err) return log.error(err)
                                     log.info('Supression de ',path);
                                 })
                             }
                             else{
-                                log.error('Hash de ',element._text+date+filename,': ',hash1,' Nok');
-
-                                return
+                                fileallhash(element._text+date+filename,hasher, function (err, hash1) {
+                                    if (err){
+                                        log.error(err);
+                                        return
+                                    }
+        
+                                    if(hash == hash1){
+                                        log.info('Hash de ',element._text+date+filename,': ',hash1,' ok');
+                                        fs.remove(path, err => {
+                                            if (err) return log.error(err)
+                                            log.info('Supression de ',path);
+                                        })
+                                    }
+                                    else{
+                                        log.error('Hash de ',element._text+date+filename,': ',hash1,' Nok');
+        
+                                        return
+                                    }
+                                    
+                                });
                             }
-                            
                         });
                     }
+                    else{
+                        log.error('Deplacement de ', path,' vers ',element._text+date+filename,' impossible // Fichier Existant');
+                    }
                 });
-            }
-            else{
-                log.error('Deplacement de ', path,' vers ',element._text+date+filename,' impossible // Fichier Existant');
-            }
+            });
         });
-
     }
 });
 
 //Si un ps1 est à executer.
 myevent.on('ps1',function (path,actions,filename,hasher,hash) {
+
     log.info('Node power-shell Chargé');
     actions.ps1.forEach(element => {
         let ps = new shell({
             executionPolicy: 'Bypass',
             noProfile: true
           });
-
+        
+        var tmp = element._text;
         var regex = /_filename_/gi;
-        element._text = element._text.replace(regex, path);
+        tmp = tmp.replace(regex, path);
         var regex = /_hash_/gi;
-        element._text = element._text.replace(regex, hash);
-        log.info('Execution de la commande: '+element._text);
-        ps.addCommand(element._text);
+        tmp = tmp.replace(regex, hash);
+        log.info('Execution de la commande: '+tmp);
+        ps.addCommand(tmp);
         ps.invoke()
         .then(output => {
           log.info(output);
